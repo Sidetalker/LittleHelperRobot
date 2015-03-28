@@ -5,7 +5,7 @@ import praw
 import re
 import requests
 
-from littlehelper_config import *
+# from littlehelper_config import *
 
 websites = [("m.wikipedia.org","wikipedia.org"),
 #	("m.facebook.com", "facebook.com"),
@@ -13,19 +13,37 @@ websites = [("m.wikipedia.org","wikipedia.org"),
 
 
 def start():
-        reddit = praw.Reddit(user_agent = USER_AGENT)
-        reddit.login(REDDIT_USERNAME, REDDIT_PASS)
-        comment_stream = praw.helpers.comment_stream(reddit, "all", verbosity=1)
-        n = 0
-        for comment in comment_stream:
-                n += 1
-                if not n % 1000:
-                        print n
+	reddit = praw.Reddit(user_agent = "spam-sideslapd")
+	reddit.login("Sideslapd", "close call!!!!")
+	comment_stream = praw.helpers.comment_stream(reddit, "all", verbosity=1)
 
-                for website in websites:
-                        if comment.body.lower().find(website[0]) != -1:
-                                got_one(comment);
+	watch_it = []
+	n = 0
 
+	for comment in comment_stream:
+		n += 1
+
+		if not n % 1000:
+			print n
+
+		for website in websites:
+			if comment.body.lower().find(website[0]) != -1:
+				my_comment = got_one(comment)
+
+				if my_comment != None:
+					print 'Added to watch_it'
+					watch_it.append(got_one(comment))
+
+		for comment in watch_it:
+			post_comments
+
+
+			print comment[0]
+			print comment[1]
+			print comment[2]
+			print comment[0].edited
+			if comment[0].edited:
+				comment[1].edit('A whole new wooorrrlllldddd')
 
 
 def demobile(expression, substitute, href, text):
@@ -61,12 +79,15 @@ def got_one(comment):
 		href = link.get('href')
 		text = link.text
 
-                for website in websites:
-                        if href.find(website[0]) != -1:
-                                new_text, new_href = demobile(website[0],website[1] , href, text)
-                                links.append({'text' : new_text, 'href' : new_href})
-                                print ">>>>> %s %s -> %s %s" % (href.encode('utf-8'), text.encode('utf-8'),
-                                        new_href.encode('utf-8'), new_text.encode('utf-8'))
+		for website in websites:
+			if href.find(website[0]) != -1:
+				new_text, new_href = demobile(website[0],website[1] , href, text)
+				links.append({'text' : new_text, 'href' : new_href})
+				print ">>>>> %s %s -> %s %s" % (href.encode('utf-8'), text.encode('utf-8'),
+					new_href.encode('utf-8'), new_text.encode('utf-8'))
+
+	print comment.author.name
+	print len(links)
 
 	if comment.author.name != "LittleHelperRobot" and len(links) > 0:
 		if len(links) == 1:
@@ -88,12 +109,16 @@ def got_one(comment):
 		try:
 			c = comment.reply(text);
 			print c.permalink.encode('utf-8')
+			return (comment, c, text)
 		except praw.errors.RateLimitExceeded as e:
 			print "Nope, rate limit exceded:", str(e)
+			return None
 		except praw.errors.APIException as e:
 			print "Some other exception:", str(e)
+			return None
 		except requests.exceptions.HTTPError as e:
 			print "Looks like we are banned here"
+			return None
 
 if __name__ == "__main__":
-        start()
+	start()
